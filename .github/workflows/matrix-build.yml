@@ -1,0 +1,50 @@
+name: Matrix Build with Artifacts (ef55641)
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+
+jobs:
+  build:
+    name: Build (node ${{ matrix.node }})
+    runs-on: ubuntu-latest
+
+    strategy:
+      matrix:
+        node: ['14', '16', '18']
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js ${{ matrix.node }}
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node }}
+
+      - name: matrix-ef55641
+        run: |
+          echo "Starting matrix job for Node.js ${{ matrix.node }}"
+          echo "JOB_VARIANT=node-${{ matrix.node }}" > metadata.txt
+
+      - name: Build / Generate artifact
+        run: |
+          echo "build-ef55641 artifact for node version ${{ matrix.node }}" > build-info.txt
+          echo "timestamp: $(date -u +"%Y-%m-%dT%H:%M:%SZ")" >> build-info.txt
+          echo "git-ref: ${{ github.sha }}" >> build-info.txt
+          echo "workflow: ${{ github.workflow }}" >> build-info.txt
+          echo "" >> build-info.txt
+          echo "Detailed metadata (for auditing):" >> build-info.txt
+          cat metadata.txt >> build-info.txt
+          cp build-info.txt build-ef55641-v${{ matrix.node }}.txt
+
+      - name: List artifact file (debug)
+        run: ls -lh build-ef55641-v${{ matrix.node }}.txt build-info.txt || true
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: build-ef55641-v${{ matrix.node }}
+          path: build-ef55641-v${{ matrix.node }}.txt
